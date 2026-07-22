@@ -59,12 +59,12 @@ function getTodayStringISO() {
     return d.toISOString().split('T')[0];
 }
 
-// Função auxiliar para somar meses em uma string de data (YYYY-MM-DD) mantendo o dia correto
+// Função robusta para somar meses mantendo a integridade da data (YYYY-MM-DD)
 function somarMesesData(dataISO, mesesAdicionar) {
     if (!dataISO) return "";
     const partes = dataISO.split('-');
     let ano = parseInt(partes[0], 10);
-    let mes = parseInt(partes[1], 10) - 1 + mesesAdicionار;
+    let mes = parseInt(partes[1], 10) - 1 + mesesAdicionar;
     let dia = parseInt(partes[2], 10);
 
     ano += Math.floor(mes / 12);
@@ -74,7 +74,6 @@ function somarMesesData(dataISO, mesesAdicionar) {
         ano -= 1;
     }
 
-    // Ajuste de fim de mês se necessário (ex: 31 de janeiro + 1 mês)
     const ultimoDiaMes = new Date(ano, mes + 1, 0).getDate();
     if (dia > ultimoDiaMes) {
         dia = ultimoDiaMes;
@@ -222,7 +221,7 @@ document.getElementById('filtro-nome-cliente').addEventListener('input', renderC
 
 
 // --- CADASTRO CONTRATOS ---
-document.getElementById('cad-parcelas').addEventListener('input', (e) => {
+document.getElementById('cad-parcelas').addEventListener('input', () => {
     gerarCamposParcelas();
 });
 
@@ -249,11 +248,11 @@ function gerarCamposParcelas() {
         `;
     }
 
-    // Adiciona evento na primeira parcela para auto preencher as seguintes somando 1 mês
+    // Configura o evento change/input na primeira parcela para atualizar as demais instantaneamente
     const primeiraPrazoInput = container.querySelector('.cad-prazo');
     if (primeiraPrazoInput) {
-        primeiraPrazoInput.addEventListener('input', (e) => {
-            const dataBase = e.target.value;
+        const atualizarPrazosSubsequentes = () => {
+            const dataBase = primeiraPrazoInput.value;
             if (!dataBase) return;
 
             const todosPrazos = container.querySelectorAll('.cad-prazo');
@@ -262,7 +261,10 @@ function gerarCamposParcelas() {
                     input.value = somarMesesData(dataBase, index);
                 }
             });
-        });
+        };
+
+        primeiraPrazoInput.addEventListener('input', atualizarPrazosSubsequentes);
+        primeiraPrazoInput.addEventListener('change', atualizarPrazosSubsequentes);
     }
 }
 
