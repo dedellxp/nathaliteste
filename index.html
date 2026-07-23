@@ -57,7 +57,7 @@
                 </div>
                 <!-- Alertas do Dashboard -->
                 <div class="alert-panel mt-8" style="display: flex; gap: 10px;">
-                    <div class="card" style="flex: 1; background-color: var(--color-bg-4); border-color: var(--color-error);">
+                    <div id="btn-dashboard-atrasados" class="card" style="flex: 1; background-color: var(--color-bg-4); border-color: var(--color-error); cursor: pointer; transition: transform 0.2s;" title="Clique para ver Estatísticas">
                         <div class="card__body text-center">
                             <h4 class="text-error">Parcelas em Atraso</h4>
                             <h2 id="alert-atrasados">0</h2>
@@ -202,7 +202,7 @@
         </div>
     </div>
 
-    <!-- Tela Clientes (Pesquisa de Parcelas por Nome) -->
+    <!-- Tela Clientes (Pesquisa de Contratos por Nome) -->
     <div id="clientes-screen" class="screen">
         <div class="screen-header">
             <div class="container">
@@ -217,20 +217,18 @@
                 <div class="card__body flex gap-8 items-center">
                     <input type="text" id="pesquisa-cliente-nome" class="form-control" placeholder="Digite o nome do cliente...">
                     <button id="btn-pesquisar-cliente" class="btn btn--primary">Pesquisar</button>
-                    <button id="btn-salvar-pesquisa" class="btn btn--success">Salvar Alterações</button>
                 </div>
             </div>
             <div class="table-container card">
                 <table class="data-table" id="tabela-pesquisa-cliente">
                     <thead>
                         <tr>
-                            <th>Pago?</th>
+                            <th>Ações</th>
                             <th>Cliente</th>
-                            <th>Título Contrato</th>
+                            <th>Título do Contrato</th>
                             <th>Valor Total</th>
-                            <th>Valor Parcela</th>
-                            <th>Parcela</th>
-                            <th>Prazo</th>
+                            <th>Qtd Parcelas</th>
+                            <th>Próximo Prazo</th>
                             <th>Situação</th>
                         </tr>
                     </thead>
@@ -351,6 +349,23 @@
                     </thead>
                     <tbody></tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Gerenciar Parcelas do Contrato -->
+    <div id="parcelas-modal" class="modal hidden">
+        <div class="modal-content modal-content--large">
+            <div class="modal-header"><h3 id="modal-parcelas-titulo">Gerenciar Parcelas</h3></div>
+            <div class="modal-body">
+                <form id="parcelas-modal-form">
+                    <input type="hidden" id="modal-contrato-id">
+                    <div id="modal-parcelas-container"></div>
+                    <div class="modal-footer mt-8">
+                        <button type="submit" class="btn btn--success">Salvar Alterações</button>
+                        <button type="button" class="btn btn--outline btn-fechar-modal">Fechar</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

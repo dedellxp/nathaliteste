@@ -59,7 +59,7 @@ function getTodayStringISO() {
     return d.toISOString().split('T')[0];
 }
 
-// Função robusta para somar meses mantendo a integridade da data (YYYY-MM-DD)
+// Função para somar meses mantendo a integridade da data (YYYY-MM-DD)
 function somarMesesData(dataISO, mesesAdicionar) {
     if (!dataISO) return "";
     const partes = dataISO.split('-');
@@ -109,6 +109,12 @@ document.getElementById('nav-pesquisa-data').onclick = () => showScreen('pesquis
 document.getElementById('nav-basedados').onclick = () => { renderBaseDados(); showScreen('basedados-screen'); };
 document.getElementById('nav-estatistica').onclick = () => { renderEstatistica(); showScreen('estatistica-screen'); };
 document.getElementById('nav-perfil').onclick = () => document.getElementById('profile-modal').classList.remove('hidden');
+
+// Atalho do Dashboard para Estatísticas (Aviso de Atrasados)
+document.getElementById('btn-dashboard-atrasados').onclick = () => {
+    renderEstatistica();
+    showScreen('estatistica-screen');
+};
 
 // --- AUTENTICAÇÃO ---
 document.getElementById('login-form').addEventListener('submit', async (e) => {
@@ -248,7 +254,6 @@ function gerarCamposParcelas() {
         `;
     }
 
-    // Configura o evento change/input na primeira parcela para atualizar as demais instantaneamente
     const primeiraPrazoInput = container.querySelector('.cad-prazo');
     if (primeiraPrazoInput) {
         const atualizarPrazosSubsequentes = () => {
@@ -302,41 +307,95 @@ document.getElementById('cadastro-form').addEventListener('submit', async (e) =>
     showScreen('dashboard-screen');
 });
 
-// --- PESQUISA CLIENTES ---
+// --- PESQUISA CLIENTES (CONTRATOS) ---
 document.getElementById('btn-pesquisar-cliente').onclick = () => {
     const nome = document.getElementById('pesquisa-cliente-nome').value.toUpperCase();
     const tbody = document.querySelector('#tabela-pesquisa-cliente tbody');
     tbody.innerHTML = "";
 
-    todosContratos.filter(c => c.cliente.includes(nome)).forEach(contrato => {
-        contrato.parcelas.forEach((p, index) => {
-            const sit = p.paga ? "Pago" : (p.prazo < getTodayStringISO() ? "Atrasado" : "Aberto");
-            tbody.innerHTML += `
-                <tr>
-                    <td><input type="checkbox" class="chk-pesquisa" data-id="${contrato.id}" data-idx="${index}" ${p.paga ? 'checked' : ''}></td>
-                    <td>${contrato.cliente}</td>
-                    <td>${contrato.titulo || '-'}</td>
-                    <td>R$ ${contrato.valorTotal.toFixed(2)}</td>
-                    <td>R$ ${contrato.valorParcela.toFixed(2)}</td>
-                    <td>${p.numero} de ${contrato.numeroParcelas}</td>
-                    <td>${formatPtBr(new Date(p.prazo + "T12:00:00Z"))}</td>
-                    <td>${sit}</td>
-                </tr>
-            `;
-        });
+    const contratosFiltrados = todosContratos.filter(c => c.cliente.includes(nome));
+
+    if (contratosFiltrados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center">Nenhum contrato encontrado.</td></tr>`;
+        return;
+    }
+
+    contratosFiltrados.forEach(contrato => {
+        // Encontrar o próximo prazo em aberto
+        let proximaParcela = contrato.parcelas.find(p => !p.paga);
+        let proximaPrazoStr = "-";
+        
+        if (proximaParcela) {
+            proximaPrazoStr = formatPtBr(new Date(proximaParcela.prazo + "T12:00:00Z"));
+        } else if (contrato.parcelas.length > 0) {
+            // Se todas pagas, pega o prazo da última
+            let ultima = contrato.parcelas[contrato.parcelas.length - 1];
+            proximaPrazoStr = formatPtBr(new Date(ultima.prazo + "T12:00:00Z")) + " (Quitado)";
+        }
+
+        // Situação do contrato
+        let emAberto = contrato.parcelas.some(p => !p.paga && p.prazo >= getTodayStringISO());
+        let atrasado = contrato.parcelas.some(p => !p.paga && p.prazo < getTodayStringISO());
+        let situacaoContrato = atrasado ? "Atrasado" : (emAberto ? "Aberto" : "Pago");
+
+        tbody.innerHTML += `
+            <tr>
+                <td><button class="btn btn--sm btn--primary" onclick="abrirModalParcelas('${contrato.id}')" title="Ver Parcelas">+</button></td>
+                <td>${contrato.cliente}</td>
+                <td>${contrato.titulo || '-'}</td>
+                <td>R$ ${contrato.valorTotal.toFixed(2)}</td>
+                <td>${contrato.numeroParcelas}</td>
+                <td>${proximaPrazoStr}</td>
+                <td>${situacaoContrato}</td>
+            </tr>
+        `;
     });
 };
 
-document.getElementById('btn-salvar-pesquisa').onclick = async () => {
-    const checks = document.querySelectorAll('.chk-pesquisa');
-    let alteracoes = {};
-    checks.forEach(chk => {
-        alteracoes[`contratos/${chk.dataset.id}/parcelas/${chk.dataset.idx}/paga`] = chk.checked;
+// Função global para abrir o modal de gerenciamento de parcelas do contrato específico
+window.abrirModalParcelas = (contratoId) => {
+    const contrato = todosContratos.find(c => c.id === contratoId);
+    if (!contrato) return;
+
+    document.getElementById('modal-contrato-id').value = contrato.id;
+    document.getElementById('modal-parcelas-titulo').textContent = `Parcelas do Contrato: ${contrato.titulo || 'Sem Título'} (${contrato.cliente})`;
+
+    let html = "";
+    contrato.parcelas.forEach((p, idx) => {
+        const sit = p.paga ? "Pago" : (p.prazo < getTodayStringISO() ? "Atrasado" : "Aberto");
+        html += `
+            <div class="parcela-row">
+                <label>Parc ${p.numero}</label>
+                <input type="date" class="form-control modal-prazo" data-idx="${idx}" value="${p.prazo}" required>
+                <label><input type="checkbox" class="modal-pago" data-idx="${idx}" ${p.paga ? 'checked' : ''}> Pago?</label>
+                <span class="status-indicator-text" style="font-size: 12px; font-weight: bold; margin-left: auto;">${sit}</span>
+            </div>
+        `;
     });
-    await update(ref(database), alteracoes);
-    alert("Alterações salvas!");
-    document.getElementById('btn-pesquisar-cliente').click();
+
+    document.getElementById('modal-parcelas-container').innerHTML = html;
+    document.getElementById('parcelas-modal').classList.remove('hidden');
 };
+
+// Salvar edições feitas no modal de parcelas
+document.getElementById('parcelas-modal-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const contratoId = document.getElementById('modal-contrato-id').value;
+    const prazosDOM = document.querySelectorAll('.modal-prazo');
+    const pagosDOM = document.querySelectorAll('.modal-pago');
+
+    let alteracoes = {};
+    prazosDOM.forEach((input, idx) => {
+        alteracoes[`contratos/${contratoId}/parcelas/${idx}/prazo`] = input.value;
+        alteracoes[`contratos/${contratoId}/parcelas/${idx}/paga`] = pagosDOM[idx].checked;
+    });
+
+    await update(ref(database), alteracoes);
+    alert("Parcelas atualizadas com sucesso!");
+    document.getElementById('parcelas-modal').classList.add('hidden');
+    // Atualiza a tabela de pesquisa caso esteja ativa
+    document.getElementById('btn-pesquisar-cliente').click();
+});
 
 // --- PESQUISA POR DATA ---
 document.getElementById('btn-pesquisar-data').onclick = () => {
