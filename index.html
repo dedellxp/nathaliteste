@@ -9,7 +9,7 @@
 <body>
     <!-- Tela de Login -->
     <div id="login-screen" class="screen active">
-        <div class="login-container">
+        <div class="login-container flex-col">
             <div class="login-card card">
                 <div class="card__body">
                     <h1 class="login-title">Sistema Jurídico</h1>
@@ -40,6 +40,10 @@
                     <div id="login-error" class="error-message hidden"></div>
                 </div>
             </div>
+            <!-- Logo centralizada abaixo da caixa de login -->
+            <div class="login-logo-container mt-16 text-center">
+                <img src="bg.jpg" alt="Logo da Empresa" class="app-logo app-logo--login">
+            </div>
         </div>
     </div>
 
@@ -48,10 +52,14 @@
         <div class="dashboard-header">
             <div class="container">
                 <div class="header-content">
-                    <div class="header-info">
-                        <h2>Painel Principal</h2>
-                        <p id="user-info">Bem-vindo!</p>
-                        <p id="datetime-info">Data e hora</p>
+                    <div class="header-info flex items-center gap-16">
+                        <!-- Logo da empresa ao lado de Painel Principal -->
+                        <img src="bg.jpg" alt="Logo da Empresa" class="app-logo app-logo--dashboard">
+                        <div>
+                            <h2>Painel Principal</h2>
+                            <p id="user-info">Bem-vindo!</p>
+                            <p id="datetime-info">Data e hora</p>
+                        </div>
                     </div>
                     <button id="logout-btn" class="btn btn--outline">Sair</button>
                 </div>
@@ -366,6 +374,21 @@
                         <button type="button" class="btn btn--outline btn-fechar-modal">Fechar</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmação de Exclusão -->
+    <div id="delete-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header"><h3>Excluir Entrada</h3></div>
+            <div class="modal-body my-16">
+                <input type="hidden" id="delete-id">
+                <p>Tem certeza que deseja excluir essa entrada?</p>
+            </div>
+            <div class="modal-footer justify-center" style="gap: 15px;">
+                <button type="button" id="btn-confirmar-exclusao" class="btn btn--danger" style="background: var(--color-error); color: white;">Sim</button>
+                <button type="button" class="btn btn--outline btn-fechar-modal">Não</button>
             </div>
         </div>
     </div>

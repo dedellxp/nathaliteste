@@ -2897,3 +2897,23 @@ resize: vertical;
     height: 20px;
     cursor: pointer;
 }
+/* Estilos para as logos da empresa inseridas */
+.app-logo {
+    object-fit: contain;
+    display: block;
+}
+
+.app-logo--dashboard {
+    width: 45px;
+    height: 45px;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-xs);
+}
+
+.app-logo--login {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto;
+    border-radius: var(--radius-sm);
+    opacity: 0.9;
+}

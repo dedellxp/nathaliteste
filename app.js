@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-import { getDatabase, ref, push, onValue, update } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js';
+import { getDatabase, ref, push, onValue, update, remove } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js';
 import { getAuth, signInWithEmailAndPassword, updatePassword } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -321,19 +321,16 @@ document.getElementById('btn-pesquisar-cliente').onclick = () => {
     }
 
     contratosFiltrados.forEach(contrato => {
-        // Encontrar o próximo prazo em aberto
         let proximaParcela = contrato.parcelas.find(p => !p.paga);
         let proximaPrazoStr = "-";
         
         if (proximaParcela) {
             proximaPrazoStr = formatPtBr(new Date(proximaParcela.prazo + "T12:00:00Z"));
         } else if (contrato.parcelas.length > 0) {
-            // Se todas pagas, pega o prazo da última
             let ultima = contrato.parcelas[contrato.parcelas.length - 1];
             proximaPrazoStr = formatPtBr(new Date(ultima.prazo + "T12:00:00Z")) + " (Quitado)";
         }
 
-        // Situação do contrato
         let emAberto = contrato.parcelas.some(p => !p.paga && p.prazo >= getTodayStringISO());
         let atrasado = contrato.parcelas.some(p => !p.paga && p.prazo < getTodayStringISO());
         let situacaoContrato = atrasado ? "Atrasado" : (emAberto ? "Aberto" : "Pago");
@@ -352,7 +349,6 @@ document.getElementById('btn-pesquisar-cliente').onclick = () => {
     });
 };
 
-// Função global para abrir o modal de gerenciamento de parcelas do contrato específico
 window.abrirModalParcelas = (contratoId) => {
     const contrato = todosContratos.find(c => c.id === contratoId);
     if (!contrato) return;
@@ -377,7 +373,6 @@ window.abrirModalParcelas = (contratoId) => {
     document.getElementById('parcelas-modal').classList.remove('hidden');
 };
 
-// Salvar edições feitas no modal de parcelas
 document.getElementById('parcelas-modal-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const contratoId = document.getElementById('modal-contrato-id').value;
@@ -393,7 +388,6 @@ document.getElementById('parcelas-modal-form').addEventListener('submit', async 
     await update(ref(database), alteracoes);
     alert("Parcelas atualizadas com sucesso!");
     document.getElementById('parcelas-modal').classList.add('hidden');
-    // Atualiza a tabela de pesquisa caso esteja ativa
     document.getElementById('btn-pesquisar-cliente').click();
 });
 
@@ -438,7 +432,7 @@ document.getElementById('btn-salvar-pesquisa-data').onclick = async () => {
     document.getElementById('btn-pesquisar-data').click();
 };
 
-// --- BASE DE DADOS E EDIÇÃO ---
+// --- BASE DE DADOS E EDIÇÃO / EXCLUSÃO ---
 function renderBaseDados() {
     const statusFiltro = document.getElementById('filtro-situacao').value;
     const dataFiltro = document.getElementById('filtro-data').value;
@@ -462,7 +456,12 @@ function renderBaseDados() {
                     <td>R$ ${c.valorTotal.toFixed(2)}</td>
                     <td>${c.numeroParcelas}</td>
                     <td>${situacaoGeral}</td>
-                    <td><button class="btn btn--sm btn--primary" onclick="abrirEdicao('${c.id}')">Editar</button></td>
+                    <td>
+                        <div style="display: flex; gap: 5px;">
+                            <button class="btn btn--sm btn--primary" onclick="abrirEdicao('${c.id}')">Editar</button>
+                            <button class="btn btn--sm btn--danger" style="background: var(--color-error); color: white;" onclick="abrirExclusao('${c.id}')">Excluir</button>
+                        </div>
+                    </td>
                 </tr>
             `;
         }
@@ -508,6 +507,26 @@ document.getElementById('edit-form').onsubmit = async (e) => {
     await update(ref(database), atualizacao);
     document.getElementById('edit-modal').classList.add('hidden');
     alert("Salvo!");
+};
+
+// Funções para Exclusão
+window.abrirExclusao = (id) => {
+    document.getElementById('delete-id').value = id;
+    document.getElementById('delete-modal').classList.remove('hidden');
+};
+
+document.getElementById('btn-confirmar-exclusao').onclick = async () => {
+    const id = document.getElementById('delete-id').value;
+    if (!id) return;
+
+    try {
+        await remove(ref(database, `contratos/${id}`));
+        alert("Entrada excluída com sucesso da base de dados!");
+        document.getElementById('delete-modal').classList.add('hidden');
+        renderBaseDados();
+    } catch (err) {
+        alert("Erro ao excluir entrada.");
+    }
 };
 
 // --- ESTATÍSTICA E DASHBOARD ---
