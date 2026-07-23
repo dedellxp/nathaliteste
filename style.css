@@ -2904,16 +2904,22 @@ resize: vertical;
 }
 
 .app-logo--dashboard {
-    width: 45px;
-    height: 45px;
-    border-radius: var(--radius-sm);
+    width: 65px;
+    height: 65px;
+    border-radius: var(--radius-base);
     box-shadow: var(--shadow-xs);
 }
 
 .app-logo--login {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto;
+    width: 50px;
+    height: 50px;
     border-radius: var(--radius-sm);
-    opacity: 0.9;
+    flex-shrink: 0;
+}
+
+.login-title {
+    font-size: 22px;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    letter-spacing: normal;
 }
