@@ -2925,7 +2925,8 @@ resize: vertical;
 }
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* Adicione ao seu arquivo CSS existente para suporte ao Autocomplete de Cliente */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 .autocomplete-container {
     position: relative;
 }

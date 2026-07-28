@@ -59,6 +59,13 @@ function getTodayStringISO() {
     return d.toISOString().split('T')[0];
 }
 
+function getCurrentMonthISO() {
+    const d = getBrasiliaDate();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+}
+
 // Função para somar meses mantendo a integridade da data (YYYY-MM-DD)
 function somarMesesData(dataISO, mesesAdicionar) {
     if (!dataISO) return "";
@@ -690,7 +697,47 @@ function calcularEstatisticas() {
     document.getElementById('est-atrasados').textContent = atrasados;
 }
 
+// --- CÁLCULO DE FATURAMENTO MENSAL ---
+function calcularFaturamentoMensal() {
+    const mesAno = document.getElementById('faturamento-mes-select').value;
+    if (!mesAno) return;
+
+    let totalPago = 0;
+    let qtdPagas = 0;
+    let totalPendente = 0;
+    let qtdPendentes = 0;
+
+    todosContratos.forEach(c => {
+        c.parcelas.forEach(p => {
+            if (p.prazo && p.prazo.startsWith(mesAno)) {
+                if (p.paga) {
+                    totalPago += c.valorParcela;
+                    qtdPagas++;
+                } else {
+                    totalPendente += c.valorParcela;
+                    qtdPendentes++;
+                }
+            }
+        });
+    });
+
+    document.getElementById('fat-pago-valor').textContent = `R$ ${totalPago.toFixed(2)}`;
+    document.getElementById('fat-pago-qtd').textContent = `${qtdPagas} parcela(s) pagas`;
+
+    document.getElementById('fat-pendente-valor').textContent = `R$ ${totalPendente.toFixed(2)}`;
+    document.getElementById('fat-pendente-qtd').textContent = `${qtdPendentes} parcela(s) não pagas`;
+}
+
+document.getElementById('faturamento-mes-select').addEventListener('change', calcularFaturamentoMensal);
+
 function renderEstatistica() {
+    // Configurar mês padrão se estiver vazio
+    const mesSelect = document.getElementById('faturamento-mes-select');
+    if (!mesSelect.value) {
+        mesSelect.value = getCurrentMonthISO();
+    }
+    calcularFaturamentoMensal();
+
     const tbody = document.querySelector('#tabela-atrasos tbody');
     let listaAtrasos = [];
     const hoje = getBrasiliaDate();

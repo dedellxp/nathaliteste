@@ -352,13 +352,43 @@
             </div>
         </div>
         <div class="container">
+            <!-- Indicadores Gerais -->
             <div class="dashboard-buttons mb-8">
-                <div class="card"><div class="card__body text-center"><h4 class="text-success">Parcelas Pagas</h4><h2 id="est-pagas">0</h2></div></div>
+                <div class="card"><div class="card__body text-center"><h4 class="text-success">Parcelas Pagas (Geral)</h4><h2 id="est-pagas">0</h2></div></div>
                 <div class="card"><div class="card__body text-center"><h4>Contratos em Aberto</h4><h2 id="est-abertos">0</h2></div></div>
-                <div class="card"><div class="card__body text-center"><h4 class="text-error">Parcelas Atrasadas</h4><h2 id="est-atrasados">0</h2></div></div>
+                <div class="card"><div class="card__body text-center"><h4 class="text-error">Parcelas Atrasadas (Geral)</h4><h2 id="est-atrasados">0</h2></div></div>
+            </div>
+
+            <!-- Caixa de Faturamento Mensal -->
+            <div class="card mb-8" style="background-color: var(--color-surface); border: 2px solid var(--color-primary);">
+                <div class="card__header" style="padding-bottom: 8px;">
+                    <h3 style="color: var(--color-primary);">📊 Faturamento Mensal</h3>
+                </div>
+                <div class="card__body">
+                    <div class="form-group mb-16" style="max-width: 300px;">
+                        <label class="form-label">Selecione o Mês/Ano:</label>
+                        <input type="month" id="faturamento-mes-select" class="form-control">
+                    </div>
+                    <div class="flex gap-16" style="flex-wrap: wrap;">
+                        <div class="card" style="flex: 1; min-width: 250px; background-color: var(--color-bg-3); border-color: var(--color-success);">
+                            <div class="card__body text-center">
+                                <h4 class="text-success" style="margin-bottom: 4px;">Faturamento Realizado (Pago)</h4>
+                                <h2 id="fat-pago-valor" class="text-success" style="margin-bottom: 4px;">R$ 0,00</h2>
+                                <p id="fat-pago-qtd" class="m-0" style="font-size: 13px; font-weight: bold; color: var(--color-text-secondary);">0 parcelas pagas</p>
+                            </div>
+                        </div>
+                        <div class="card" style="flex: 1; min-width: 250px; background-color: var(--color-bg-4); border-color: var(--color-error);">
+                            <div class="card__body text-center">
+                                <h4 class="text-error" style="margin-bottom: 4px;">Faturamento Não Pago (Pendente/Atrasado)</h4>
+                                <h2 id="fat-pendente-valor" class="text-error" style="margin-bottom: 4px;">R$ 0,00</h2>
+                                <p id="fat-pendente-qtd" class="m-0" style="font-size: 13px; font-weight: bold; color: var(--color-text-secondary);">0 parcelas não pagas</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
-            <h3 class="mb-8 mt-8">Detalhamento de Atrasos</h3>
+            <h3 class="mb-8 mt-16">Detalhamento de Atrasos</h3>
             <div class="table-container card">
                 <table class="data-table" id="tabela-atrasos">
                     <thead>
