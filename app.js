@@ -533,7 +533,7 @@ function renderParcelasEditModal(contrato, containerId, prefix) {
 
 function atualizarResumoModal(modalBody, valorTotalContrato, prefix) {
     const inputsPago = modalBody.querySelectorAll(`.${prefix}-pago-valor`);
-    let totalPago = 0;
+    let totalPagoParcelas = 0;
     let countPagas = 0;
     let countRestantes = 0;
 
@@ -543,23 +543,30 @@ function atualizarResumoModal(modalBody, valorTotalContrato, prefix) {
         
         // Se estiver marcado como pago ou possuir algum valor efetivamente pago
         if (chk.checked || valor > 0) {
-            totalPago += valor;
+            totalPagoParcelas += valor;
             countPagas++;
         } else {
             countRestantes++;
         }
     });
     
-    let devido = Math.max(0, valorTotalContrato - totalPago);
+    // Pega o valor da entrada digitado no modal no momento
+    let inputEntrada = document.getElementById(`${prefix}-entrada`);
+    let valorEntrada = inputEntrada ? (parseFloat(inputEntrada.value) || 0) : 0;
+    
+    let totalGeralPago = totalPagoParcelas + valorEntrada;
+    let devido = Math.max(0, valorTotalContrato - totalGeralPago);
 
     const elPagas = modalBody.querySelector('.summary-count-pagas');
     const elRestantes = modalBody.querySelector('.summary-count-restantes');
     const elPago = modalBody.querySelector('.summary-sum-pago');
+    const elTotal = modalBody.querySelector('.summary-sum-total');
     const elAberto = modalBody.querySelector('.summary-sum-aberto');
 
     if (elPagas) elPagas.textContent = countPagas;
     if (elRestantes) elRestantes.textContent = countRestantes;
-    if (elPago) elPago.textContent = `R$ ${totalPago.toFixed(2)}`;
+    if (elPago) elPago.textContent = `R$ ${totalPagoParcelas.toFixed(2)}`;
+    if (elTotal) elTotal.textContent = `R$ ${totalGeralPago.toFixed(2)}`;
     if (elAberto) elAberto.textContent = `R$ ${devido.toFixed(2)}`;
 }
 
@@ -690,7 +697,12 @@ window.abrirModalParcelas = (contratoId) => {
     if (!contrato) return;
 
     document.getElementById('modal-contrato-id').value = contrato.id;
-    document.getElementById('modal-entrada').value = contrato.valorEntrada || 0;
+    
+    let inputEntrada = document.getElementById('modal-entrada');
+    inputEntrada.value = contrato.valorEntrada || 0;
+    // Gatilho para atualizar o resumo se a entrada for editada
+    inputEntrada.oninput = () => atualizarResumoModal(document.querySelector('#parcelas-modal .modal-body'), contrato.valorTotal, 'modal');
+    
     document.getElementById('modal-observacao').value = contrato.observacao || '';
     document.getElementById('modal-parcelas-titulo').textContent = `Parcelas do Contrato: ${contrato.titulo || 'Sem Título'} (${contrato.cliente})`;
 
@@ -761,7 +773,12 @@ window.abrirEdicao = (id) => {
     document.getElementById('edit-id').value = c.id;
     document.getElementById('edit-cliente').value = c.cliente;
     document.getElementById('edit-titulo').value = c.titulo || '';
-    document.getElementById('edit-entrada').value = c.valorEntrada || 0;
+    
+    let inputEntrada = document.getElementById('edit-entrada');
+    inputEntrada.value = c.valorEntrada || 0;
+    // Gatilho para atualizar o resumo se a entrada for editada
+    inputEntrada.oninput = () => atualizarResumoModal(document.querySelector('#edit-modal .modal-body'), c.valorTotal, 'edit');
+    
     document.getElementById('edit-observacao').value = c.observacao || '';
     
     renderParcelasEditModal(c, 'edit-parcelas-container', 'edit');
