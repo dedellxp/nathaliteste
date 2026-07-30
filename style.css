@@ -2962,3 +2962,33 @@ resize: vertical;
 .autocomplete-item:last-child {
     border-bottom: none;
 }
+/* Customizações para layout de Pagamento Parcial */
+.font-weight-bold {
+    font-weight: bold;
+}
+
+.text-primary {
+    color: var(--color-primary);
+}
+
+.diff-acao-select {
+    font-size: 11px !important;
+    padding: 4px 8px !important;
+    height: auto !important;
+    border-color: var(--color-warning) !important;
+    background-color: var(--color-bg-2) !important;
+}
+
+.diff-container {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px;
+    background: var(--color-bg-2);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--color-warning);
+    animation: fadeIn var(--duration-fast) ease-in;
+}
+
+textarea.form-control {
+    min-height: 80px;
+}
