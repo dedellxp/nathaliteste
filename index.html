@@ -92,6 +92,7 @@
                     <button id="nav-clientes" class="btn btn--primary btn--lg"><span>🔍</span> Pesquisa por Cliente</button>
                     <button id="nav-pesquisa-data" class="btn btn--primary btn--lg"><span>📅</span> Pesquisa por Data</button>
                     <button id="nav-estatistica" class="btn btn--info btn--lg"><span>📊</span> Estatística</button>
+                    <button id="nav-relatorio" class="btn btn--lg" style="background: var(--color-teal-600); color: white; border: 1px solid var(--color-teal-800);"><span>📄</span> Relatórios</button>
                     <button id="nav-perfil" class="btn btn--profile btn--lg"><span>⚙️</span> Perfil</button>
                 </div>
             </div>
@@ -405,6 +406,46 @@
             <div class="flex justify-between items-center mt-16 mb-32">
                 <div></div>
                 <button id="btn-salvar-atrasos" class="btn btn--success btn--lg">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TELA NOVA: Relatórios (Pronta para PDF) -->
+    <div id="relatorio-screen" class="screen">
+        <div class="screen-header no-print">
+            <div class="container">
+                <div class="header-content">
+                    <h2>Relatório Gerencial</h2>
+                    <button class="btn btn--outline btn-voltar">Voltar</button>
+                </div>
+            </div>
+        </div>
+        <div class="container no-print">
+            <div class="card mb-16">
+                <div class="card__body">
+                    <div class="form-group flex gap-16 items-center" style="margin-bottom: 15px;">
+                        <label class="flex items-center gap-4 cursor-pointer">
+                            <input type="radio" name="tipo-relatorio" value="semestral" checked> Semestral
+                        </label>
+                        <label class="flex items-center gap-4 cursor-pointer">
+                            <input type="radio" name="tipo-relatorio" value="anual"> Anual
+                        </label>
+                    </div>
+                    <div class="form-group" style="max-width: 300px;">
+                        <label class="form-label">Selecione o Período</label>
+                        <select id="relatorio-periodo" class="form-control"></select>
+                    </div>
+                    <div class="flex gap-8 mt-16">
+                        <button id="btn-gerar-relatorio" class="btn btn--primary">Gerar Relatório</button>
+                        <button id="btn-imprimir-relatorio" class="btn btn--success hidden">🖨️ Imprimir / Gerar PDF</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container" id="printable-report-container" style="display:none; margin-top: 20px;">
+            <div id="printable-report" style="background: white; color: black; padding: 40px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+                <!-- O relatório em si será injetado aqui -->
             </div>
         </div>
     </div>

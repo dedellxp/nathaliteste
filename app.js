@@ -116,6 +116,14 @@ document.getElementById('nav-basedados').onclick = () => { renderBaseDados(); sh
 document.getElementById('nav-estatistica').onclick = () => { renderEstatistica(); showScreen('estatistica-screen'); };
 document.getElementById('nav-perfil').onclick = () => document.getElementById('profile-modal').classList.remove('hidden');
 
+// Abertura do novo dashboard de relatórios
+document.getElementById('nav-relatorio').onclick = () => {
+    atualizarOpcoesRelatorio();
+    document.getElementById('printable-report-container').style.display = 'none';
+    document.getElementById('btn-imprimir-relatorio').classList.add('hidden');
+    showScreen('relatorio-screen');
+};
+
 document.getElementById('btn-dashboard-atrasados').onclick = () => {
     renderEstatistica();
     showScreen('estatistica-screen');
@@ -1025,4 +1033,170 @@ document.getElementById('btn-salvar-atrasos').onclick = async () => {
     alert(`${marcados} parcela(s) atualizada(s) para paga(s)!`);
     renderEstatistica();
     calcularEstatisticas();
+};
+
+// --- MÓDULO DE RELATÓRIOS E IMPRESSÃO (NOVO) ---
+const radioRelatorio = document.querySelectorAll('input[name="tipo-relatorio"]');
+radioRelatorio.forEach(radio => radio.addEventListener('change', atualizarOpcoesRelatorio));
+
+function atualizarOpcoesRelatorio() {
+    const tipo = document.querySelector('input[name="tipo-relatorio"]:checked').value;
+    const select = document.getElementById('relatorio-periodo');
+    select.innerHTML = '';
+    
+    let anoAtual = getBrasiliaDate().getFullYear();
+    
+    if (tipo === 'semestral') {
+        select.innerHTML += `<option value="ultimos_6">Últimos seis meses</option>`;
+        for(let a = anoAtual; a >= 2025; a--) {
+            select.innerHTML += `<option value="sem2_${a}">2º Semestre ${a}</option>`;
+            select.innerHTML += `<option value="sem1_${a}">1º Semestre ${a}</option>`;
+        }
+    } else {
+        for(let a = anoAtual; a >= 2025; a--) {
+            select.innerHTML += `<option value="ano_${a}">Ano ${a}</option>`;
+        }
+    }
+}
+
+document.getElementById('btn-gerar-relatorio').onclick = () => {
+    const val = document.getElementById('relatorio-periodo').value;
+    let start, end, labelPeriodo;
+    let hoje = getBrasiliaDate();
+    
+    // Configura os boundaries de pesquisa baseados no Dropdown
+    if (val === 'ultimos_6') {
+        let seisMesesAtras = getBrasiliaDate();
+        seisMesesAtras.setMonth(seisMesesAtras.getMonth() - 6);
+        start = seisMesesAtras.toISOString().split('T')[0];
+        end = hoje.toISOString().split('T')[0];
+        labelPeriodo = "Últimos 6 meses";
+    } else if (val.startsWith('sem1_')) {
+        let ano = val.split('_')[1];
+        start = `${ano}-01-01`; end = `${ano}-06-30`;
+        labelPeriodo = `1º Semestre de ${ano}`;
+    } else if (val.startsWith('sem2_')) {
+        let ano = val.split('_')[1];
+        start = `${ano}-07-01`; end = `${ano}-12-31`;
+        labelPeriodo = `2º Semestre de ${ano}`;
+    } else if (val.startsWith('ano_')) {
+        let ano = val.split('_')[1];
+        start = `${ano}-01-01`; end = `${ano}-12-31`;
+        labelPeriodo = `Ano de ${ano}`;
+    }
+
+    // Estrutura do relatório a preencher
+    let rel = {
+        qtdTotal: 0,
+        qtdPagas: 0,
+        qtdNaoPagas: 0,
+        valEsperado: 0,
+        valPago: 0,
+        valNaoPago: 0,
+        valEntrada: 0,
+        valTotalArrecadado: 0
+    };
+
+    todosContratos.forEach(c => {
+        // Checagem segura para pegar apenas a PRIMEIRA parcela do contrato
+        let firstParcela = (c.parcelas && c.parcelas.length > 0) ? c.parcelas[0] : null;
+        let entradaSomadaParaEsteContrato = false;
+
+        c.parcelas.forEach(p => {
+            // Verifica se a parcela pertence ao período
+            if (p.prazo >= start && p.prazo <= end) {
+                rel.qtdTotal++;
+                
+                let original = parseFloat(p.valorOriginal) || 0;
+                let pago = parseFloat(p.valorPago) || 0;
+                
+                // Se a parcela não tiver "valorPago" mas estiver ticada como paga (retrocompatibilidade)
+                if (p.paga && pago === 0) pago = parseFloat(p.valorEsperado) || original;
+                
+                let faltaPagar = original - pago;
+                if (faltaPagar < 0) faltaPagar = 0; // Se pagou a mais
+
+                rel.valEsperado += original;
+                rel.valPago += pago;
+                rel.valNaoPago += faltaPagar;
+
+                // Contagens (só conta como pago se pagou algo ou se estiver marcado como true)
+                if (p.paga || pago >= original) {
+                    rel.qtdPagas++;
+                } else {
+                    rel.qtdNaoPagas++; // Se foi parcial sem o checkbox de quitado, entra nos não pagos (ou com pendência)
+                }
+
+                // Se houver valor de entrada, vamos analisar SE essa é a primeira parcela do contrato
+                if (firstParcela && p.numero === firstParcela.numero && !entradaSomadaParaEsteContrato) {
+                    rel.valEntrada += (parseFloat(c.valorEntrada) || 0);
+                    entradaSomadaParaEsteContrato = true; // Garante q some apenas 1x
+                }
+            }
+        });
+    });
+
+    rel.valTotalArrecadado = rel.valPago + rel.valEntrada;
+
+    const formatCurrency = (v) => `R$ ${v.toFixed(2).replace('.', ',')}`;
+    const formatDateBr = (isoStr) => formatPtBr(new Date(isoStr + "T12:00:00Z"));
+
+    // Construção Visual da área de impressão em HTML
+    const relatorioHtml = `
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="font-size: 26px; margin-bottom: 10px; color: #111;">Relatório Gerencial de Contratos</h1>
+            <p style="font-size: 15px; color: #555;"><strong>Período Considerado:</strong> ${labelPeriodo} (De ${formatDateBr(start)} a ${formatDateBr(end)})</p>
+            <p style="font-size: 13px; color: #777;">Gerado em: ${formatPtBr(getBrasiliaDate())} às ${getBrasiliaDate().toLocaleTimeString('pt-BR')}</p>
+        </div>
+        
+        <table class="relatorio-table">
+            <tbody>
+                <tr>
+                    <th style="width: 70%; font-size: 15px;">Total de parcelas (Que vencem/venceram no período)</th>
+                    <td style="font-weight: bold; text-align: right; font-size: 15px;">${rel.qtdTotal} un.</td>
+                </tr>
+                <tr>
+                    <th>Quantidade de parcelas pagas no período</th>
+                    <td style="color: #21808d; font-weight: bold; text-align: right;">${rel.qtdPagas} un.</td>
+                </tr>
+                <tr>
+                    <th>Quantidade de parcelas com pendência / não pagas</th>
+                    <td style="color: #c0152f; font-weight: bold; text-align: right;">${rel.qtdNaoPagas} un.</td>
+                </tr>
+                <tr><td colspan="2" style="background-color: #fff; border: 0; padding: 10px;"></td></tr>
+                <tr>
+                    <th>Total Esperado (Soma do valor original das parcelas listadas)</th>
+                    <td style="text-align: right; font-weight: 600;">${formatCurrency(rel.valEsperado)}</td>
+                </tr>
+                <tr>
+                    <th>Total de Parcelas Pagas (Soma do valor efetivamente pago)</th>
+                    <td style="color: #21808d; font-weight: bold; text-align: right;">${formatCurrency(rel.valPago)}</td>
+                </tr>
+                <tr>
+                    <th>Total Não Pago (Diferença entre o pago e o valor original)</th>
+                    <td style="color: #c0152f; font-weight: bold; text-align: right;">${formatCurrency(rel.valNaoPago)}</td>
+                </tr>
+                <tr><td colspan="2" style="background-color: #fff; border: 0; padding: 10px;"></td></tr>
+                <tr>
+                    <th>Valores de Entrada (Considerados pela data da 1ª parcela)</th>
+                    <td style="text-align: right; font-weight: 600;">${formatCurrency(rel.valEntrada)}</td>
+                </tr>
+                <tr style="background-color: #eaf6f7;">
+                    <th style="font-size: 18px; color: #134252; padding: 16px;">VALOR TOTAL ARRECADADO (Parcelas + Entradas)</th>
+                    <td style="font-size: 18px; font-weight: bold; color: #134252; text-align: right; padding: 16px;">${formatCurrency(rel.valTotalArrecadado)}</td>
+                </tr>
+            </tbody>
+        </table>
+        <div style="margin-top: 50px; border-top: 1px solid #ccc; padding-top: 15px; font-size: 11px; text-align: center; color: #888;">
+            Documento gerado automaticamente pelo Sistema de Controle de Pagamentos.
+        </div>
+    `;
+
+    document.getElementById('printable-report').innerHTML = relatorioHtml;
+    document.getElementById('printable-report-container').style.display = 'block';
+    document.getElementById('btn-imprimir-relatorio').classList.remove('hidden');
+};
+
+document.getElementById('btn-imprimir-relatorio').onclick = () => {
+    window.print();
 };
